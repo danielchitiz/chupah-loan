@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createStore, addDays, today } from '../store.js';
 
-const input = (days=10) => ({ name: 'זוג בדיקה', date: addDays(today(), days), location: 'ירושלים', phone: '0501234567' });
+const input = (days=10) => ({ name: 'זוג בדיקה', date: addDays(today(), days), location: 'ירושלים', phone: '0501234567', email: 'couple@example.com' });
 function memory(t) { const store=createStore(':memory:');t.after(()=>store.db.close());return store; }
 test('pending reservations block duplicate dates; rejection releases them',t=>{
   const store=memory(t),request=input();const row=store.create(request);
@@ -25,7 +25,7 @@ test('approval, return date, reminder log, and return tracking',t=>{
 });
 test('invalid dates, incomplete contact details, and unsafe donation URLs are rejected',t=>{
   const store=memory(t);
-  for(const patch of [{date:'2027-02-30'},{date:addDays(today(),-1)},{date:addDays(today(),731)},{name:''},{location:''},{phone:'abc'}])assert.throws(()=>store.create({...input(),...patch}));
+  for(const patch of [{date:'2027-02-30'},{date:addDays(today(),-1)},{date:addDays(today(),731)},{name:''},{location:''},{phone:'abc'},{email:''},{email:'not-an-email'},{email:'a@example.com\r\nBcc: other@example.com'}])assert.throws(()=>store.create({...input(),...patch}));
   const {id}=store.create(input());assert.throws(()=>store.update(id,{return_date:addDays(input().date,-1)}));
   for(const url of ['javascript:alert(1)','http://example.com','not a url'])assert.throws(()=>store.saveSettings({donation_url:url}));
   assert.equal(store.saveSettings({donation_url:'https://example.com/donate'}).donation_url,'https://example.com/donate');
